@@ -1,15 +1,13 @@
 FROM continuumio/miniconda3 
 
-# Set a working directory
-WORKDIR /env
-
-COPY environment.yml .
-
+# install git
 RUN apt-get update \
 && apt-get install -y --no-install-recommends git \
-&& apt-get clean \
-&& conda env create -f environment.yml
+&& apt-get clean
+RUN git clone https://github.com/jiananwu72/PointDefectsRL /repository
 
-SHELL ["conda", "run", "-n", "point_defects", "/bin/bash", "-c"]
-
-RUN git clone <repository_url> /app
+WORKDIR /repository
+RUN conda env create -f environment.yml \
+ && conda clean -afy
+ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "point_defects"]
+CMD ["bash"]

@@ -4,6 +4,15 @@ import matplotlib.pyplot as plt
 class Patch():
 
     def __init__(self, crop, index, col_edges, row_edges):
+        """
+        Initialize a Patch object.
+        
+        Args:
+            crop: A Crop object containing the image data and metadata.
+            index: A tuple (i, j) representing the position of the patch in the grid.
+            col_edges: A list or array with 2 pixel index of column edges defining the patch boundaries.
+            row_edges: A list or array with 2 pixel index of row edges defining the patch boundaries.
+        """
 
         self.crop = crop
         self.index = index

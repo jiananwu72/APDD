@@ -9,7 +9,10 @@ class CropClassification:
         """
         Return the requested intensity for an atom.
 
-        metric: 'mean' | 'max' | 'sum' | 'eels_Fe' | 'eels_Lu' | 'voronoi_mean' | 'voronoi_max' | 'voronoi_sum'
+        Args:
+            atom: An atom object containing intensity attributes.
+            metric: A string specifying which intensity to return. One of:
+                'mean' | 'max' | 'sum' | 'eels_Fe' | 'eels_Lu'
         """
 
         if isinstance(metric, str):
@@ -20,10 +23,6 @@ class CropClassification:
 
                 'eels_Fe': 'integrated_intensity_Fe',
                 'eels_Lu': 'integrated_intensity_Lu',
-
-                'voronoi_mean': 'mean_intensity_voronoi',
-                'voronoi_max' : 'max_intensity_voronoi',
-                'voronoi_sum' : 'sum_intensity_voronoi',
             }
             if metric not in attr_map:
                 raise ValueError(f"Unknown intensity metric: {metric!r}.")
@@ -35,11 +34,14 @@ class CropClassification:
                                 horizonal_radius = 2, vertical_radius = 2, metric = 'mean'):
         """
         Get nearest neighbor intensity for same types of atoms.
+        Will not count atoms of different types inside the radius.
 
-        number_of_atoms_from_edge: number of atoms that will avoid counting from the edge and will be labeled None.
-
-        horizontal_radius and vertical_radius: number of atoms to be considered around in the grid
-        will not count atoms of different types inside the radius.
+        Args:
+            number_of_atoms_from_edge: number of atoms that will avoid counting from the edge and will be labeled None.
+            horizontal_radius: number of atoms to be considered around in the grid horizontally, default = 2.
+            vertical_radius: number of atoms to be considered around in the grid vertically, default = 2.
+            metric: A string specifying which intensity to use. One of:
+                'mean' | 'max' | 'sum' | 'eels_Fe' | 'eels_Lu'
         """
         for patch in self.grid.values():
             # Get rid of edge atoms
@@ -76,9 +78,13 @@ class CropClassification:
                                 horizonal_radius = 1, vertical_radius = 1, metric = 'mean'):
         """
         Get nearest neighbor intensity for all types of atoms.
-
-        number_of_atoms_from_edge: number of atoms that will avoid counting from the edge and will be labeled None.
-        horizontal_radius and vertical_radius: number of atoms to be considered around in the grid
+        
+        Args:
+            number_of_atoms_from_edge: number of atoms that will avoid counting from the edge and will be labeled None.
+            horizontal_radius: number of atoms to be considered around in the grid horizontally, default = 1.
+            vertical_radius: number of atoms to be considered around in the grid vertically, default = 1.
+            metric: A string specifying which intensity to use. One of:
+                'mean' | 'max' | 'sum' | 'eels_Fe' | 'eels_Lu'
         """
         for patch in self.grid.values():
             # Get rid of edge atoms
@@ -108,6 +114,13 @@ class CropClassification:
             patch.nn_all_atom_intensity_differences = center_intensity - atom_intensities
 
     def get_nn_displacements(self, number_of_atoms_from_edge = 2):
+        """
+        Get nearest neighbor displacements for all types of atoms.
+        
+        Args:
+            number_of_atoms_from_edge: number of atoms that will avoid counting from the edge of roi
+                and will be labeled None.
+        """
         for patch in self.grid.values():
             # Get rid of edge atoms
             if patch.index[0] < number_of_atoms_from_edge or patch.index[0] >= self.grid_shape[0] - number_of_atoms_from_edge:
@@ -134,9 +147,10 @@ class CropClassification:
         """
         Find the outliers by looking at mean intensity differences.
 
-        outlier_bar: z values
-        atom_type: 'Lu', 'Fe', or 'all'
-        atom_selection: 'same' or 'all'
+        Args:
+            outlier_bar: z values
+            atom_type: 'Lu', 'Fe', or 'all'
+            atom_selection: 'same' or 'all'
         """
         means = []
         indices = []

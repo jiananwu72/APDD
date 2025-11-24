@@ -3,19 +3,39 @@ import scipy
 import matplotlib.pyplot as plt
 import atomap.api as am
 
-from .crop_intensity import CropIntensity
 from .crop_classification import CropClassification
 from .patch import Patch
 
-class Crop(CropIntensity, CropClassification):
+class Crop(CropClassification):
 
     def __init__(self, signal, left = None, right = None, start = None, end = None):
+        """
+        Create the Crop object, which is a rectangular region of interest (ROI) within the input signal. 
+        The ROI is defined by the left, right, start, and end pixels. If any of these parameters are None, 
+        they will default to the full width or height of the signal.
+
+        Args:
+            signal: An instance of the Hyperspy Signal class containing the image data.
+            left: The left pixel index of the ROI (inclusive). Defaults to 0.
+            right: The right pixel index of the ROI (exclusive). Defaults to the image width.
+            start: The top pixel index of the ROI (inclusive). Defaults to 0.
+            end: The bottom pixel index of the ROI (exclusive). Defaults to the image height.
+        """
         self.signal = signal
 
         if left is None: left = 0
         if right is None: right = signal.data.shape[1]
         if start is None: start = 0
         if end is None: end = signal.data.shape[0]
+
+        H, W = self.signal.data.shape
+        if right > W:
+            right = W
+            print("right exceeds image width; using image width instead.")
+        if end > H:
+            end = H
+            print("end exceeds image height; using image height instead.")
+
         self.left = left
         self.right = right
         self.start = start
@@ -35,15 +55,20 @@ class Crop(CropIntensity, CropClassification):
         self.grid_shape = None
         self.atom_positions = None
 
-    def get_vertical_peaks(self, left=None, right=None, get_plot=False, 
+    def get_vertical_peaks(self, get_plot=False, 
                            detect_height=1, min_sep=3, prom_coeff = 0.1):
-        
-        H, W = self.signal.data.shape
-        if left is None:  left = self.left
-        if right is None: right = self.right
-        if right > W:
-            right = W
-            print("right exceeds image width; using image width instead.")
+        """
+        Detect vertical peaks and troughs in the ROI by summing pixel intensities along horizontal strips.
+
+        Args:
+            get_plot: If True, will plot the strengths and detected peaks/troughs.
+            detect_height: The height of the strip to sum over when calculating strengths.
+            min_sep: Minimum separation (in pixels) between peaks/troughs.
+            prom_coeff: Coefficient to determine the prominence threshold for peak detection.
+        """
+
+        left = self.left
+        right = self.right
 
         # Build strengths for y in [start, end)
         strengths = []
@@ -76,15 +101,21 @@ class Crop(CropIntensity, CropClassification):
             # plt.xlim(y_coords[0], y_coords[-1])  # matches data coordinates
             plt.tight_layout(); plt.show()
 
-    def get_horizontal_peaks(self, start=None, end=None, get_plot=False, 
+    def get_horizontal_peaks(self, get_plot=False, 
                              detect_width=1, min_sep=3, prom_coeff = 0.1):
         
-        H, W = self.signal.data.shape
-        if start is None: start = self.start
-        if end   is None: end = self.end
-        if end > H:
-            end = H
-            print("end exceeds image height; using image height instead.")
+        """
+        Detect horizontal peaks and troughs in the ROI by summing pixel intensities along vertical strips.
+
+        Args:
+            get_plot: If True, will plot the strengths and detected peaks/troughs.
+            detect_width: The width of the strip to sum over when calculating strengths.
+            min_sep: Minimum separation (in pixels) between peaks/troughs.
+            prom_coeff: Coefficient to determine the prominence threshold for peak detection.
+        """
+
+        start = self.start
+        end = self.end
 
         # Build strengths for x in [left, right)
         strengths = []
@@ -115,7 +146,30 @@ class Crop(CropIntensity, CropClassification):
             plt.xlim(x_coords[0], x_coords[-1])  # matches data coordinates
             plt.tight_layout(); plt.show()
 
+    def plot_grid_peaks(self):
+        """
+        Plot the ROI with vertical and horizontal peaks overlaid as dashed lines.
+        """
+        
+        plt.close()
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.imshow(self.roi)
+
+        # Overlay grid lines at detected peaks
+        for x in self.vertical_peaks:
+            ax.axvline(x-self.left, color='magenta', linestyle='--', linewidth=1)
+        for y in self.horizontal_peaks:
+            ax.axhline(y-self.start, color='cyan', linestyle='--', linewidth=1)
+
+        ax.set_title('ROI with Detected Grid (Peaks)')
+        plt.tight_layout()
+        plt.show()
+    
     def plot_grid_troughs(self):
+        """
+        Plot the ROI with vertical and horizontal troughs overlaid as dashed lines.
+        """
+
         plt.close()
         fig, ax = plt.subplots(figsize=(10, 10))
         ax.imshow(self.roi)
@@ -134,14 +188,9 @@ class Crop(CropIntensity, CropClassification):
     def build_grid_dict(self):
         """
         Build a 2D dictionary of grid cells bounded by adjacent horizontal/vertical troughs.
-        Uses the *first through last* entries of self.vertical_troughs and self.horizontal_troughs.
-
-        Returns
-        -------
-        grid : dict of patches
+        Uses the first through last entries of self.vertical_troughs and self.horizontal_troughs.
+        Results stored in self.grid.
         """
-
-        import numpy as np
 
         # Require troughs to be present
         if not hasattr(self, "vertical_troughs") or self.vertical_troughs is None:
@@ -149,7 +198,7 @@ class Crop(CropIntensity, CropClassification):
         if not hasattr(self, "horizontal_troughs") or self.horizontal_troughs is None:
             raise ValueError("horizontal_troughs not set. Run get_horizontal_peaks(...).")
 
-        W, H = self.signal.data.shape  # your convention: (x = width, y = height)
+        W, H = self.signal.data.shape  # (x = width, y = height)
 
         # Prepare sorted, unique, in-bounds edges
         v = np.asarray(self.vertical_troughs, dtype=int)
@@ -178,7 +227,10 @@ class Crop(CropIntensity, CropClassification):
 
     def plot_grid_intensities(self, intensity_type = 'mean'):
         """
-        intensity_type: 'mean', 'sum', or 'max'
+        Plot a 2D map of grid cell intensities.
+
+        Args:
+            intensity_type: 'mean', 'max', or 'sum' to specify which intensity measure to plot.
         """
 
         x_len = self.grid_shape[0]
@@ -208,8 +260,14 @@ class Crop(CropIntensity, CropClassification):
 
     def get_atom_positions(self, mask_size = 10, mask_std = 3, get_plot = False):
         """
-        separation: separation for atomap's atom finding
-        sigma_allowance: std difference for identifying outliers
+        Get initial atom positions by convolving each patch with a Gaussian kernel and finding the 
+        maximum response. The convolution on the edges will be handled by scipy's 'constant' mode, 
+        which pads with zeros.
+
+        Args:
+            mask_size: The size of the Gaussian kernel (in pixels), default = 10.
+            mask_std: The standard deviation of the Gaussian kernel (in pixels), default = 3.
+            get_plot: If True, will plot the ROI with detected atom positions overlaid.
         """
         # Create a kernel
         g1d = scipy.signal.windows.gaussian(mask_size, std=mask_std)   # 1D Gaussian
@@ -244,7 +302,16 @@ class Crop(CropIntensity, CropClassification):
 
     def refine_atom_positions(self, mask_radius = None, percent_to_nn=None, get_plot = False):
         """
-        refine_atom_positions
+        Refine atom positions using the Atomap library. This method uses the initial positions 
+        as a starting point and applies two refinement steps: center of mass and 2D Gaussian fitting. 
+        The parameters for these refinements can be controlled by mask_radius and percent_to_nn.
+
+        Note: this takes a long time to run.
+
+        Args:
+            mask_radius: The radius of the mask used for refinement (in pixels), default = None.
+            percent_to_nn: The percentage to nearest neighbors used for refinement, default = None.
+            get_plot: If True, will plot the ROI with detected atom positions overlaid.
         """
 
         keys = list(self.atom_positions.keys())
@@ -277,6 +344,12 @@ class Crop(CropIntensity, CropClassification):
             plt.show()
     
     def plot_positions(self, show_troughs = False):
+        """
+        Plot the ROI with detected atom positions overlaid.
+        
+        Args:
+            show_troughs: If True, will also plot the vertical and horizontal troughs as dashed lines.
+        """
         positions_array = np.array(list(self.atom_positions.values()))
 
         fig, ax = plt.subplots(figsize=(10, 10))
@@ -293,7 +366,12 @@ class Crop(CropIntensity, CropClassification):
     
     def get_atom_types(self, tol = 0.0):
         """
-        Only For LuFeO3. Not for generalization
+        Determine atom types (Lu vs Fe) based on the mean intensity of each patch.
+
+        Note: this is only for LuFeO3; not for generalization to other materials.
+
+        Args:
+            tol: Tolerance for determining if a layer is Lu or Fe based on intensity.
         """
         layer_intensities = np.zeros(self.grid_shape[1])
 

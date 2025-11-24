@@ -4,7 +4,11 @@ import matplotlib.pyplot as plt
 # EELS fitting methods with help from Jian Huang
 def eels_get_nearest_index(arr, val):
     """
-    Gives index of array closest to desired value
+    Gives index of array closest to desired spectrum value.
+
+    Args:
+        arr: 1D array of values to search through
+        val: value to find closest match for
     """    
     
     id = np.argmin(np.abs(arr - val))
@@ -12,7 +16,10 @@ def eels_get_nearest_index(arr, val):
 
 def eels_normalize(arr):
     """
-    Converts an array of arbitrary values to a 0-1 range
+    Converts an array to 0-1 range
+
+    Args:
+        arr: 1D array of values to normalize
     """    
     
     arr = np.asarray(arr)
@@ -21,6 +28,15 @@ def eels_normalize(arr):
     return narr
 
 def autoscale_ylim(ax, xdata, ydata, padding=0.01):
+    """
+    Autoscale the y-axis limits of a plot based on the visible x-data.
+
+    Args:
+        ax: Matplotlib axis object to adjust
+        xdata: 1D array of x-values corresponding to the data points
+        ydata: 1D array of y-values corresponding to the data points
+        padding: Fractional padding to add to the y-limits (default is 0.01 for 1% padding)
+    """
     x0, x1 = ax.get_xlim()
     mask = (xdata >= x0) & (xdata <= x1)
     y_visible = ydata[mask]
@@ -33,10 +49,11 @@ def power_fit(eels_signal, fit_ranges, get_plot=False, plot_range=None):
     """
     Fits a power law background to EELS
 
-    eels_signal: pure energy loss (HyperSpy spectrum object) with dimensions of: (|n)
-        for an image, the imput should be a sum over the spatial dimensions
-    fit_ranges: 2k size numpy array of energy loss ranges to fit (eV)
-    plot_range: [low_energy, high_energy] range to plot (eV)
+    Args:
+        eels_signal: pure energy loss (HyperSpy spectrum object) with dimensions of: (|n)
+            for an image, the imput should be a sum over the spatial dimensions
+        fit_ranges: 2k size numpy array of energy loss ranges to fit (eV)
+        plot_range: [low_energy, high_energy] range to plot (eV)
     """   
 
     energies = eels_signal.axes_manager.signal_axes[0].axis

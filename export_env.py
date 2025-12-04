@@ -1,3 +1,6 @@
+# To use this script, run:
+#   python export_env.py > environment.yml
+
 """
 Export a Conda environment with --from-history, but also append
 Pip-installed dependencies
@@ -25,12 +28,11 @@ MIT License:
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 """
+
 import re
 import subprocess
 import sys
-
 import yaml
-
 
 def export_env(history_only=False, include_builds=False):
     """ Capture `conda env export` output """
@@ -52,14 +54,14 @@ def export_env(history_only=False, include_builds=False):
 def _is_history_dep(d, history_deps):
     if not isinstance(d, str):
         return False
-    d_prefix = re.sub(r'=.*', '', d)
+    parts = d.split('=')
+    d_prefix = "=".join(parts[:2])
     return d_prefix in history_deps
 
 def _get_pip_deps(full_deps):
     for dep in full_deps:
         if isinstance(dep, dict) and 'pip' in dep:
             return dep
-
 
 def _combine_env_data(env_data_full, env_data_hist):
     deps_full = env_data_full['dependencies']
@@ -73,10 +75,10 @@ def _combine_env_data(env_data_full, env_data_hist):
         env_data['name'] = env_data_full['name']
     env_data['channels'] = env_data_full['channels']
     env_data['dependencies'] = deps
-    env_data['dependencies'].append(pip_deps)
+    if pip_deps:
+        env_data['dependencies'].append(pip_deps)
 
     return env_data
-
 
 def main():
     env_data_full = export_env()

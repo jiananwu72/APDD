@@ -14,7 +14,7 @@ if str(project_root) not in sys.path:
 from util.crop import Crop
 
 # Load structure; cif_path will be edited to load from command line
-cif_path = 'data/structures/LFO_Orth.cif'
+cif_path = project_root / 'data' / 'structures' / 'LFO_Orth.cif'
 atoms = ase.io.read(cif_path)
 
 # Set simulation on GPU

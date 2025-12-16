@@ -36,6 +36,7 @@ RUN conda env create -f /tmp/environment.yml
 RUN conda run -n apdd pip install --no-cache-dir \
     cupy-cuda12x
 ENV PATH=/opt/conda/envs/apdd/bin:$PATH
+ENV HOME=/tmp
 
 ENTRYPOINT [ "/usr/bin/tini", "--" ]
 CMD [ "/bin/bash" ]

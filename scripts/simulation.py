@@ -18,7 +18,7 @@ cif_path = project_root / 'data' / 'structures' / 'LFO_Orth.cif'
 atoms = ase.io.read(cif_path)
 
 # Set simulation on GPU
-abtem.config.set({"device": "cpu", "fft": "fftw"})
+abtem.config.set({"device": "gpu", "fft": "fftw"})
 
 # atoms *= (3, 1, 1)  # Repeat unit cell if needed
 
@@ -45,4 +45,4 @@ filtered_measurements = interpolated_measurements.gaussian_filter(0.3)
 noisy_measurements = filtered_measurements.poisson_noise(dose_per_area=1e7)
 
 output = noisy_measurements.array.T
-np.save('noisy_data.npy', output)
+np.save(project_root / 'data' / 'simulations' / 'noisy_data.npy', output)

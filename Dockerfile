@@ -35,7 +35,7 @@ RUN chmod +x /usr/bin/tini
 COPY environment.yml /tmp/environment.yml
 RUN conda env create -f /tmp/environment.yml
 RUN conda run -n apdd pip install --no-cache-dir \
-    cupy-cuda12x
+    cupy-cuda11x
 ENV PATH=/opt/conda/envs/apdd/bin:$PATH
 
 ENTRYPOINT [ "/usr/bin/tini", "--" ]

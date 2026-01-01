@@ -1,0 +1,6 @@
+Using default tag: latest
+latest: Pulling from jiananwu72/miniconda-cupy
+Digest: sha256:126f05c9f5f718b55de8d3866475b6f3b82c24a4f82062f73fe27f0130e17059
+Status: Image is up to date for jiananwu72/miniconda-cupy:latest
+docker.io/jiananwu72/miniconda-cupy:latest
+  0%|          | 0/4 [00:00<?, ?it/s] 25%|██▌       | 1/4 [06:15<18:47, 375.82s/it] 50%|█████     | 2/4 [34:47<38:42, 1161.39s/it] 75%|███████▌  | 3/4 [55:04<19:46, 1186.85s/it]100%|██████████| 4/4 [2:29:23<00:00, 2952.60s/it]100%|██████████| 4/4 [2:29:23<00:00, 2240.94s/it]

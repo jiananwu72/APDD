@@ -18,17 +18,18 @@ from util.crop import Crop
 # Load structure; cif_path will be edited to load from command line
 cif_path = project_root / 'data' / 'structures' / 'LFO_Orth.cif'
 unit_cell = ase.io.read(cif_path)
-save_dir = project_root / 'data' / 'simulations' / 'tests3'
+save_dir = project_root / 'data' / 'simulations' / 'tests4'
+save_dir.mkdir(parents=True, exist_ok=True)
 
 # Set simulation on GPU
 abtem.config.set({"device": "gpu", "fft": "fftw"})
 
 sweep_configs = {
     'energy': [100e3],      # eV
-    'Cs': [0, 5.6e4],              # in Angstroms
-    'layers': [40, 45, 50, 55, 60],     # number of layers along z
-    'semiangle_cutoff': [15, 22, 30],      # in milliradians
-    'defocus': [0, 10, 20],               # in Angstroms
+    'Cs': [0],              # in Angstroms
+    'layers': [20, 25, 30, 35, 40, 45],     # number of layers along z
+    'semiangle_cutoff': [22, 25, 28, 30],      # in milliradians
+    'defocus': [10, 15, 20, 25, 30],               # in Angstroms
 }
 
 def run_simulation(unit_cell, energy, Cs, layers, semiangle_cutoff, defocus):
@@ -76,12 +77,9 @@ param_names = list(sweep_configs.keys())
 param_values = list(sweep_configs.values())
 combinations = list(product(*param_values))
 
-results = []
-
+# Run simulations for all combinations
 print(f"Running {len(combinations)} simulations...")
-
 for params in tqdm(combinations):
     current_kwargs = dict(zip(param_names, params))
     sim_result = run_simulation(unit_cell, **current_kwargs)    
-    
 print("All simulations complete.")

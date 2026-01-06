@@ -14,9 +14,10 @@ if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 
 from util.crop_classification import CropClassification
+from util.crop_simulation import CropSimulation
 from util.patch import Patch
 
-class Crop(CropClassification):
+class Crop(CropClassification, CropSimulation):
 
     def __init__(self, signal, left = None, right = None, start = None, end = None):
         """
@@ -87,10 +88,10 @@ class Crop(CropClassification):
         plt.tight_layout()
         plt.show()
 
-    def get_vertical_peaks(self, get_plot=False, 
+    def get_horizontal_peaks(self, get_plot=False, 
                            detect_height=1, min_sep=3, prom_coeff = 0.1):
         """
-        Detect vertical peaks and troughs in the ROI by summing pixel intensities along horizontal strips.
+        Detect horizontal peaks and troughs in the ROI by summing pixel intensities along horizontal lines.
 
         Args:
             get_plot: If True, will plot the strengths and detected peaks/troughs.
@@ -127,17 +128,17 @@ class Crop(CropClassification):
             plt.plot(y_coords, strengths, '-k', label='strip strength')
             plt.plot(self.horizontal_peaks,   strengths[peaks],   'ro', label='local maxima')
             plt.plot(self.horizontal_troughs, strengths[troughs], 'go', label='local minima')
-            plt.xlabel('y-axis pixel index');  plt.ylabel('Summed intensity')
-            plt.title('Vertical window strengths with detected peaks and troughs')
+            plt.xlabel('x-axis pixel index');  plt.ylabel('Summed intensity')
+            plt.title('Horizontal window strengths with detected peaks and troughs')
             plt.legend()
             # plt.xlim(y_coords[0], y_coords[-1])  # matches data coordinates
             plt.tight_layout(); plt.show()
 
-    def get_horizontal_peaks(self, get_plot=False, 
+    def get_vertical_peaks(self, get_plot=False, 
                              detect_width=1, min_sep=3, prom_coeff = 0.1):
         
         """
-        Detect horizontal peaks and troughs in the ROI by summing pixel intensities along vertical strips.
+        Detect vertical peaks and troughs in the ROI by summing pixel intensities along vertical lines.
 
         Args:
             get_plot: If True, will plot the strengths and detected peaks/troughs.
@@ -172,8 +173,8 @@ class Crop(CropClassification):
             plt.plot(x_coords, strengths, '-k', label='strip strength')
             plt.plot(self.vertical_peaks,   strengths[peaks],   'ro', label='local maxima')
             plt.plot(self.vertical_troughs, strengths[troughs], 'go', label='local minima')
-            plt.xlabel('x-axis pixel index');  plt.ylabel('Summed intensity')
-            plt.title('Horizontal window strengths with detected peaks and troughs')
+            plt.xlabel('y-axis pixel index');  plt.ylabel('Summed intensity')
+            plt.title('Vertical window strengths with detected peaks and troughs')
             plt.legend()
             plt.xlim(x_coords[0], x_coords[-1])  # matches data coordinates
             plt.tight_layout(); plt.show()
@@ -231,9 +232,9 @@ class Crop(CropClassification):
 
         # Require peaks and troughs to be present
         if self.horizontal_peaks is None and self.horizontal_troughs is None:
-            self.get_vertical_peaks(detect_height=detect_height, min_sep=min_sep, prom_coeff=prom_coeff)
+            self.get_horizontal_peaks(detect_height=detect_height, min_sep=min_sep, prom_coeff=prom_coeff)
         if self.vertical_peaks is None and self.vertical_troughs is None:
-            self.get_horizontal_peaks(detect_width=detect_width, min_sep=min_sep, prom_coeff=prom_coeff)
+            self.get_vertical_peaks(detect_width=detect_width, min_sep=min_sep, prom_coeff=prom_coeff)
 
         W, H = self.signal.data.shape  # (x = width, y = height)
 

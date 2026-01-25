@@ -18,7 +18,7 @@ from util.crop import Crop
 # Load structure; cif_path will be edited to load from command line
 cif_path = project_root / 'data' / 'structures' / 'LFO_Orth.cif'
 unit_cell = ase.io.read(cif_path)
-save_dir = project_root / 'data' / 'simulations' / 'tests5'
+save_dir = project_root / 'data' / 'simulations' / 'match'
 save_dir.mkdir(parents=True, exist_ok=True)
 
 # Set simulation on GPU
@@ -26,28 +26,18 @@ abtem.config.set({"device": "gpu", "fft": "fftw"})
 
 sweep_configs = {
     'energy': [100e3],      # eV
-    'Cs': [0],              # in Angstroms
-    'layers': [55, 60],     # number of layers along z
-    'semiangle_cutoff': [20, 25, 30, 35],      # in milliradians
-    'defocus': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],               # in Angstroms
+    'Cs': [5.593e4],              # in Angstroms
+    'layers': [40],     # number of layers along z
+    'semiangle_cutoff': [0, 5, 10, 15, 20, 25, 30],      # in milliradians
+    'defocus': [17.14],               # in Angstroms
 }
 
-# for references
-
 # sweep_configs = {
 #     'energy': [100e3],      # eV
-#     'Cs': [0],              # in Angstroms
-#     'layers': [35, 40, 45, 50],     # number of layers along z
-#     'semiangle_cutoff': [20, 25, 30, 35],      # in milliradians
-#     'defocus': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],               # in Angstroms
-# }
-
-# sweep_configs = {
-#     'energy': [100e3],      # eV
-#     'Cs': [0],              # in Angstroms
-#     'layers': [35, 40, 45, 50, 55, 60],     # number of layers along z
-#     'semiangle_cutoff': [20, 25, 30, 35],      # in milliradians
-#     'defocus': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],               # in Angstroms
+#     'Cs': [5.593e4],              # in Angstroms
+#     'layers': [40, 50, 60],     # number of layers along z
+#     'semiangle_cutoff': [0, 5, 10, 15, 20, 25, 30],      # in milliradians
+#     'defocus': [17.14],               # in Angstroms
 # }
 
 def run_simulation(unit_cell, energy, Cs, layers, semiangle_cutoff, defocus):
@@ -69,7 +59,7 @@ def run_simulation(unit_cell, energy, Cs, layers, semiangle_cutoff, defocus):
 
     grid_scan = abtem.GridScan(
         start=(0, 0),
-        end=(3/4, 3/4),
+        end=(1, 1),
         sampling=probe.aperture.nyquist_sampling,
         fractional=True,
         potential=potential,
@@ -84,10 +74,15 @@ def run_simulation(unit_cell, energy, Cs, layers, semiangle_cutoff, defocus):
     filtered = interpolated.gaussian_filter(0.3)
     noisy = filtered.poisson_noise(dose_per_area=1e7)
 
-    output = noisy.array.T
-    filename = f"noisy_E{energy/1000:.0f}keV_Cs{Cs:.1e}_Layers{layers}_Cutoff{semiangle_cutoff}mrad_Defocus{defocus}.npy"
+    output = filtered.array.T
+    filename = f"Layers{layers}_Cutoff{semiangle_cutoff}.npy"
     save_path = save_dir / filename
     np.save(save_path, output)
+
+    output_noisy = noisy.array.T
+    filename_noisy = f"Layers{layers}_Cutoff{semiangle_cutoff}_noisy.npy"
+    save_path_noisy = save_dir / filename_noisy
+    np.save(save_path_noisy, output_noisy)
 
     return output
 

@@ -15,24 +15,30 @@ if str(project_root) not in sys.path:
 
 from util.crop import Crop
 
-batch = 'VLu'
+batch = 'FeLu'
 
 # Load structure; cif_path will be edited to load from command line
 plain_cif_path = project_root / 'data' / 'structures' / 'LFO_Orth2.cif'
 defect_cif_path = project_root / 'data' / 'structures' / f'LFO_Orth_{batch}.cif'
 layer_plain = ase.io.read(plain_cif_path)
 layer_defect = ase.io.read(defect_cif_path)
-save_dir = project_root / 'data' / 'simulations' / f'test_{batch}'
+save_dir = project_root / 'data' / 'simulations' / f'{batch}'
 save_dir.mkdir(parents=True, exist_ok=True)
 
 # Set simulation on GPU
 abtem.config.set({"device": "gpu", "fft": "fftw"})
 
-layers_list = [5, 10, 15, 20, 25, 30, 35, 40]
-energy = 100e3  # eV
-Cs = 0          # in Angstroms
+layers_list = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+energy = 100e3         # eV
+Cs = 5.593e4           # in Angstroms
 semiangle_cutoff = 30  # in milliradians
-defocus = 50   # in Angstroms
+defocus = 17.14        # in Angstroms
+
+# layers_list = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+# energy = 100e3         # eV
+# Cs = 5.593e4           # in Angstroms
+# semiangle_cutoff = 30  # in milliradians
+# defocus = 17.14        # in Angstroms
 
 def run_simulation(layer_plain, layer_defect, current_layer_index, total_layers):
     """
